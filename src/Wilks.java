@@ -48,7 +48,7 @@ public class Wilks {
         // Ввод и проверка веса спортсмена
         while (true) {
             System.out.print("Введите вес спортсмена: ");
-            String weightInput = scanner.next();
+            String weightInput = scanner.next().replace(',', '.');
 
             try {
                 double weightValue = Double.parseDouble(weightInput);
@@ -67,7 +67,7 @@ public class Wilks {
         // Ввод и проверка поднятого веса
         while (true) {
             System.out.print("Введите поднятый вес (сумму): ");
-            String liftedInput = scanner.next();
+            String liftedInput = scanner.next().replace(',', '.');
 
             try {
                 double liftedValue = Double.parseDouble(liftedInput);
