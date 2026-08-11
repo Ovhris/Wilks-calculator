@@ -2,10 +2,8 @@
 import java.util.Scanner;
 
 public class Wilks {
-    // Коэффициенты для мужчин
-
-    // Коэффициенты для мужчин: {a, b, c, d, e, f}
-    static final double[] MEN_COEFFICIENTS = {
+    // ---- Коэффициенты Уилкса (Wilks Original), многочлен 5-й степени ----
+    static final double[] WILKS_MEN = {
             47.46178854,
             8.472061379,
             0.07369410346,
@@ -14,14 +12,30 @@ public class Wilks {
             -1.20804336482315E-08
     };
 
-    // Коэффициенты для женщин: {a, b, c, d, e, f}
-    static final double[] WOMEN_COEFFICIENTS = {
+    static final double[] WILKS_WOMEN = {
             -125.4255398,
             13.71219419,
             -0.03307250631,
             -0.001050400051,
             9.38773881462799E-06,
             -2.3334613884954E-08
+    };
+
+    // ---- Коэффициенты DOTS 2020, многочлен 4-й степени ----
+    static final double[] DOTS_MEN = {
+            -307.75076,
+            24.0900756,
+            -0.1918759221,
+            0.0007391293,
+            -0.000001093
+    };
+
+    static final double[] DOTS_WOMEN = {
+            -57.96288,
+            13.6175032,
+            -0.1126655,
+            0.0005158568,
+            -0.0000010706
     };
 
     public static void main(String[] args) {
@@ -31,27 +45,33 @@ public class Wilks {
         double bodyWeight = readPositiveDouble(scanner, "Введите вес спортсмена: ");
         double liftedWeight = readPositiveDouble(scanner, "Введите поднятый вес (сумму): ");
 
-        double[] coeffs = (sex == 'M') ? MEN_COEFFICIENTS : WOMEN_COEFFICIENTS;
-
-        double wilksCoefficient = calculateWilksCoefficient(bodyWeight, coeffs);
+        // Расчёт по Уилксу
+        double[] wilksCoeffs = (sex == 'M') ? WILKS_MEN : WILKS_WOMEN;
+        double wilksCoefficient = 600 / evaluatePolynomial(bodyWeight, wilksCoeffs);
         double wilksScore = liftedWeight * wilksCoefficient;
 
-        System.out.println("Коэффициент Уилкса=" + wilksCoefficient);
-        System.out.println("Очки Уилкса=" + wilksScore);
+        // Расчёт по DOTS
+        double[] dotsCoeffs = (sex == 'M') ? DOTS_MEN : DOTS_WOMEN;
+        double dotsCoefficient = 500 / evaluatePolynomial(bodyWeight, dotsCoeffs);
+        double dotsScore = liftedWeight * dotsCoefficient;
+
+        System.out.println();
+        System.out.printf("Коэффициент Уилкса=%.3f%n", wilksCoefficient);
+        System.out.printf("Очки Уилкса=%.3f%n", wilksScore);
+        System.out.println();
+        System.out.printf("Коэффициент DOTS=%.3f%n", dotsCoefficient);
+        System.out.printf("Очки DOTS=%.3f%n", dotsScore);
 
         scanner.close();
     }
 
-    // Вычисление коэффициента Уилкса по весу и набору коэффициентов
-    static double calculateWilksCoefficient(double bodyWeight, double[] c) {
-        double denominator = c[0]
-                + c[1] * bodyWeight
-                + c[2] * Math.pow(bodyWeight, 2)
-                + c[3] * Math.pow(bodyWeight, 3)
-                + c[4] * Math.pow(bodyWeight, 4)
-                + c[5] * Math.pow(bodyWeight, 5);
-
-        return 600 / denominator;
+    // Универсальное вычисление многочлена: c[0] + c[1]*x + c[2]*x^2 + ... + c[n]*x^n
+    static double evaluatePolynomial(double x, double[] coeffs) {
+        double result = 0;
+        for (int i = 0; i < coeffs.length; i++) {
+            result += coeffs[i] * Math.pow(x, i);
+        }
+        return result;
     }
 
     // Ввод и проверка пола
