@@ -38,12 +38,22 @@ public class Wilks {
             -0.0000010706
     };
 
+    // ---- Коэффициенты IPF GL, классический пауэрлифтинг (без экипировки) ----
+    // Формула: Coefficient = 100 / (A - B * e^(-C * Bwt))
+    static final double IPF_GL_A_MEN = 1199.72839;
+    static final double IPF_GL_B_MEN = 1025.18162;
+    static final double IPF_GL_C_MEN = 0.009210;
+
+    static final double IPF_GL_A_WOMEN = 610.32796;
+    static final double IPF_GL_B_WOMEN = 1045.59282;
+    static final double IPF_GL_C_WOMEN = 0.03048;
+
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
         char sex = readSex(scanner);
-        double bodyWeight = readPositiveDouble(scanner, "Введите вес спортсмена: ");
-        double liftedWeight = readPositiveDouble(scanner, "Введите поднятый вес (сумму): ");
+        double bodyWeight = readPositiveDouble(scanner, "Введите вес спортсмена (кг): ");
+        double liftedWeight = readPositiveDouble(scanner, "Введите поднятый вес, сумму (кг): ");
 
         // Расчёт по Уилксу
         double[] wilksCoeffs = (sex == 'M') ? WILKS_MEN : WILKS_WOMEN;
@@ -55,12 +65,19 @@ public class Wilks {
         double dotsCoefficient = 500 / evaluatePolynomial(bodyWeight, dotsCoeffs);
         double dotsScore = liftedWeight * dotsCoefficient;
 
+        // Расчёт по IPF GL
+        double ipfGlCoefficient = calculateIpfGlCoefficient(bodyWeight, sex);
+        double ipfGlScore = liftedWeight * ipfGlCoefficient;
+
         System.out.println();
         System.out.printf("Коэффициент Уилкса=%.3f%n", wilksCoefficient);
         System.out.printf("Очки Уилкса=%.3f%n", wilksScore);
         System.out.println();
         System.out.printf("Коэффициент DOTS=%.3f%n", dotsCoefficient);
         System.out.printf("Очки DOTS=%.3f%n", dotsScore);
+        System.out.println();
+        System.out.printf("Коэффициент IPF GL=%.6f%n", ipfGlCoefficient);
+        System.out.printf("Очки IPF GL=%.3f%n", ipfGlScore);
 
         scanner.close();
     }
@@ -72,6 +89,15 @@ public class Wilks {
             result += coeffs[i] * Math.pow(x, i);
         }
         return result;
+    }
+
+    // Расчёт коэффициента IPF GL: 100 / (A - B * e^(-C * bodyWeight))
+    static double calculateIpfGlCoefficient(double bodyWeight, char sex) {
+        double A = (sex == 'M') ? IPF_GL_A_MEN : IPF_GL_A_WOMEN;
+        double B = (sex == 'M') ? IPF_GL_B_MEN : IPF_GL_B_WOMEN;
+        double C = (sex == 'M') ? IPF_GL_C_MEN : IPF_GL_C_WOMEN;
+
+        return 100 / (A - B * Math.exp(-C * bodyWeight));
     }
 
     // Ввод и проверка пола
