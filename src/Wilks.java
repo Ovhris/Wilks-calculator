@@ -30,6 +30,8 @@ public class Wilks {
     static final double IPF_GL_B_WOMEN = 1045.59282;
     static final double IPF_GL_C_WOMEN = 0.03048;
 
+    static final String STOP_WORD = "стоп";
+
     static Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
@@ -37,6 +39,7 @@ public class Wilks {
         System.out.println("2 - Рассчитать итоговый результат соревнований");
         System.out.print("Выберите пункт: ");
         String choice = scanner.next();
+        scanner.nextLine(); // очистка буфера после next()
 
         if (choice.equals("1")) {
             calculateSingleAthlete();
@@ -57,7 +60,7 @@ public class Wilks {
         System.out.println();
         System.out.printf("Очки Уилкса=%.3f%n", athlete.wilksScore);
         System.out.printf("Очки DOTS=%.3f%n", athlete.dotsScore);
-        System.out.printf("Коэффициент IPF=%.6f%n", athlete.ipfCoefficient);
+        System.out.printf("Очки IPF=%.3f%n", athlete.ipfScore);
     }
 
     // ---------- Соревнования (несколько спортсменов) ----------
@@ -66,15 +69,30 @@ public class Wilks {
         List<Athlete> athletes = new ArrayList<>();
 
         while (true) {
-            Athlete athlete = readAthlete();
-            athletes.add(athlete);
+            System.out.print("Введите ФИО спортсмена (например: Христофоров Олег), или '"
+                    + STOP_WORD + "' для завершения: ");
+            String fullNameInput = scanner.nextLine().trim();
 
-            System.out.print("Добавить ещё спортсмена? (да/нет): ");
-            String answer = scanner.next().trim().toLowerCase();
-
-            if (!answer.equals("да")) {
+            if (fullNameInput.equalsIgnoreCase(STOP_WORD)) {
                 break;
             }
+
+            String[] nameParts = fullNameInput.split("\\s+");
+            if (nameParts.length < 2) {
+                System.out.println("Ошибка: введите фамилию и имя через пробел.");
+                continue;
+            }
+
+            String lastName = nameParts[0];
+            String firstName = nameParts[1];
+
+            Athlete athlete = readAthleteData(lastName, firstName);
+            athletes.add(athlete);
+        }
+
+        if (athletes.isEmpty()) {
+            System.out.println("Нет данных для отображения.");
+            return;
         }
 
         athletes.sort(Comparator.comparingDouble((Athlete a) -> a.wilksScore).reversed());
@@ -82,13 +100,22 @@ public class Wilks {
         printTable(athletes);
     }
 
+    // ---------- Ввод одного спортсмена целиком (режим "один спортсмен") ----------
+
     static Athlete readAthlete() {
-        System.out.print("Введите фамилию спортсмена: ");
-        String lastName = scanner.next();
+        System.out.print("Введите ФИО спортсмена (например: Христофоров Олег): ");
+        String fullNameInput = scanner.nextLine().trim();
 
-        System.out.print("Введите имя спортсмена: ");
-        String firstName = scanner.next();
+        String[] nameParts = fullNameInput.split("\\s+");
+        String lastName = nameParts[0];
+        String firstName = nameParts.length > 1 ? nameParts[1] : "";
 
+        return readAthleteData(lastName, firstName);
+    }
+
+    // ---------- Ввод остальных данных спортсмена ----------
+
+    static Athlete readAthleteData(String lastName, String firstName) {
         char sex = readSex();
         double bodyWeight = readPositiveDouble("Введите вес спортсмена (кг): ");
         double result = readPositiveDouble("Введите результат, сумму (кг): ");
@@ -102,25 +129,26 @@ public class Wilks {
         double dotsScore = result * dotsCoefficient;
 
         double ipfCoefficient = calculateIpfGlCoefficient(bodyWeight, sex);
+        double ipfScore = result * ipfCoefficient;
 
         return new Athlete(lastName, firstName, bodyWeight, result, sex,
-                wilksScore, dotsScore, ipfCoefficient);
+                wilksScore, dotsScore, ipfScore);
     }
 
     // ---------- Таблица результатов ----------
 
     static void printTable(List<Athlete> athletes) {
         System.out.println();
-        System.out.printf("%-4s %-25s %-8s %-10s %-5s %-10s %-10s %-12s%n",
-                "№", "ФИО", "Вес", "Результат", "Пол", "Wilks", "DOTS", "IPF коэфф.");
+        System.out.printf("%-4s %-25s %-8s %-10s %-5s %-10s %-10s %-10s%n",
+                "№", "ФИО", "Вес", "Результат", "Пол", "Wilks", "DOTS", "IPF очки");
         System.out.println("-".repeat(90));
 
         for (int i = 0; i < athletes.size(); i++) {
             Athlete a = athletes.get(i);
             String fullName = a.lastName + " " + a.firstName;
-            System.out.printf("%-4d %-25s %-8.1f %-10.1f %-5s %-10.2f %-10.2f %-12.6f%n",
+            System.out.printf("%-4d %-25s %-8.1f %-10.1f %-5s %-10.2f %-10.2f %-10.2f%n",
                     i + 1, fullName, a.bodyWeight, a.result, a.sex,
-                    a.wilksScore, a.dotsScore, a.ipfCoefficient);
+                    a.wilksScore, a.dotsScore, a.ipfScore);
         }
     }
 
@@ -142,7 +170,7 @@ public class Wilks {
         return 100 / (A - B * Math.exp(-C * bodyWeight));
     }
 
-    // ---------- Ввод данных ----------
+    // ---------- Ввод и проверка данных ----------
 
     static char readSex() {
         while (true) {
@@ -150,11 +178,14 @@ public class Wilks {
             String input = scanner.next().toUpperCase();
 
             if (input.equals("M") || input.equals("М")) {
+                scanner.nextLine();
                 return 'M';
             } else if (input.equals("F") || input.equals("Ж")) {
+                scanner.nextLine();
                 return 'F';
             } else {
                 System.out.println("Ошибка: введите M/F (англ.) или М/Ж (рус.).");
+                scanner.nextLine();
             }
         }
     }
@@ -163,6 +194,7 @@ public class Wilks {
         while (true) {
             System.out.print(prompt);
             String input = scanner.next().replace(',', '.');
+            scanner.nextLine();
 
             try {
                 double value = Double.parseDouble(input);
@@ -187,10 +219,10 @@ public class Wilks {
         char sex;
         double wilksScore;
         double dotsScore;
-        double ipfCoefficient;
+        double ipfScore;
 
         Athlete(String lastName, String firstName, double bodyWeight, double result, char sex,
-                double wilksScore, double dotsScore, double ipfCoefficient) {
+                double wilksScore, double dotsScore, double ipfScore) {
             this.lastName = lastName;
             this.firstName = firstName;
             this.bodyWeight = bodyWeight;
@@ -198,7 +230,7 @@ public class Wilks {
             this.sex = sex;
             this.wilksScore = wilksScore;
             this.dotsScore = dotsScore;
-            this.ipfCoefficient = ipfCoefficient;
+            this.ipfScore = ipfScore;
         }
     }
 }
