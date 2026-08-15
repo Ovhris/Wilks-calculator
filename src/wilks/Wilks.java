@@ -1,10 +1,12 @@
+package wilks;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
 
 public class Wilks {
-    // ---- Коэффициенты Уилкса (Wilks Original), многочлен 5-й степени ----
+    // ---- Коэффициенты Уилкса (wilks.Wilks Original), многочлен 5-й степени ----
     static final double[] WILKS_MEN = {
             47.46178854, 8.472061379, 0.07369410346,
             -0.001395833811, 7.07665973070743E-06, -1.20804336482315E-08
@@ -140,7 +142,7 @@ public class Wilks {
     static void printTable(List<Athlete> athletes) {
         System.out.println();
         System.out.printf("%-4s %-25s %-8s %-10s %-5s %-10s %-10s %-10s%n",
-                "№", "ФИО", "Вес", "Результат", "Пол", "Wilks", "DOTS", "IPF очки");
+                "№", "ФИО", "Вес", "Результат", "Пол", "wilks.Wilks", "DOTS", "IPF очки");
         System.out.println("-".repeat(90));
 
         for (int i = 0; i < athletes.size(); i++) {
